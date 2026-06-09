@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "func_altinn_p360_sync_prod": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7172",
+      "launchBrowser": false
+    }
+  }
+}
