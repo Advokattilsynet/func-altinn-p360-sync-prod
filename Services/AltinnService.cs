@@ -15,11 +15,11 @@ public class AltinnService
     private const string _apimSubcriptionKeyHeader = "Ocp-Apim-Subscription-Key";
     private string _apimSubcriptionKey;
 
-    public AltinnService(HttpClient httpClient, ILogger<AltinnService> logger)
+    public AltinnService(HttpClient httpClient, ILogger<AltinnService> logger, IOptions<ApimSettings> settings)
     {
         _logger = logger;
         _httpClient = httpClient;
-        _apimSubcriptionKey = Environment.GetEnvironmentVariable("APIM_SUBSCRIPTION_KEY") ?? ""; // should probably be removed in favor of Azure Secrets
+        _apimSubcriptionKey = settings.Value.SubscriptionKey;
     }
 
     public async Task<List<AltinnSoknadsskjema>?> GetInstances(CancellationToken ct = default)
