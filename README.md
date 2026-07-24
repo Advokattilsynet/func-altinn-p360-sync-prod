@@ -2,6 +2,13 @@
 
 ## Development
 
+### Prerequisites
+
+- Azure CLI
+- Access to Advokattilsynets Azure subscription
+
+### Local secrets / settings
+
 Upon local development you'll need a file in root called `local.settings.json` for Azure Application Insights, which will look something like this:
 
 ```
@@ -19,3 +26,6 @@ To get the `APPLICATIONINSIGHTS_CONNECTION_STRING`-value, check out the _**"Envi
 
 Addtionally, you will need to set the variables inside `appsettings.json` using `dotnet user-secrets`. The secrets existing values can be found in our Azure Keyvault.
 
+### Working with the app locally
+
+`func start`
