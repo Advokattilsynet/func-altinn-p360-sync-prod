@@ -22,9 +22,9 @@ public class SyncFunction
     {
         _logger.LogInformation("Fetching Altinn instances from APIM");
 
-        var results = await _altinnService.GetInstancesWithData();
+        var altinnData = await _altinnService.GetInstancesWithData();
 
-        if (results == null || !results.Any())
+        if (altinnData == null || !altinnData.Any())
         {
             return new OkObjectResult(new {
                 Message = "Success",
@@ -33,7 +33,7 @@ public class SyncFunction
             });
         }
 
-        var output = results.Select(r => new
+        var output = altinnData.Select(r => new
         {
             InstanceId = r.Instance.id,
             PartyId = r.Instance.instanceOwner?.partyId,
