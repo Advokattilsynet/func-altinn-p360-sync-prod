@@ -50,10 +50,8 @@ catch (Exception ex)
 }
 
 // HttpClient
-var appId = "tra/soknad-om-advokatbevilling";
-var todaysDate = DateTime.Now.ToString("yyyy-MM-dd");
 builder.Services.AddHttpClient<AltinnService>(client => {
-    client.BaseAddress = new Uri(apimSettings.Url! + $"?appId={appId}&process.isComplete=true&process.ended=gt:{todaysDate}");
+    client.BaseAddress = new Uri(apimSettings.Url!);
 })
 .ConfigurePrimaryHttpMessageHandler(() =>
 {

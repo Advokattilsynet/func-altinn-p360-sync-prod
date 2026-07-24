@@ -22,17 +22,9 @@ public class SyncFunction
     {
         _logger.LogInformation("Fetching Altinn instances from APIM");
 
-        var instances = await _altinnService.GetInstances();
+        var results = await _altinnService.GetInstancesWithData();
 
-        if (instances == null)
-        {
-            return new BadRequestObjectResult(new {
-                Error = "Service Connectivity Issue",
-                Details = "The Altinn service returned null. This usually indicates a timeout or authentication failure."
-            });
-        }
-        
-        if (!instances.Any())
+        if (results == null || !results.Any())
         {
             return new OkObjectResult(new {
                 Message = "Success",
@@ -41,11 +33,13 @@ public class SyncFunction
             });
         }
 
-        foreach (var instance in instances)
+        var output = results.Select(r => new
         {
-            _logger.LogInformation("Processing Instance: {InstanceId}", instance.ToString());
-        }
-    
-        return new OkObjectResult(instances);
+            InstanceId = r.Instance.id,
+            PartyId = r.Instance.instanceOwner?.partyId,
+            FormData = r.FormData
+        }).ToList();
+
+        return new OkObjectResult(output);
     }
 }

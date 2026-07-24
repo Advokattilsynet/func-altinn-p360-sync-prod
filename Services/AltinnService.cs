@@ -5,6 +5,13 @@ using Microsoft.Extensions.Options;
 using System.Text.Json;
 using Newtonsoft.Json;
 using System.Net;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Xml.Serialization;
+using System.Linq;
 
 namespace func_altinn_p360_sync_prod.Services;
 
@@ -26,7 +33,9 @@ public class AltinnService
     {
         _logger.LogInformation("Fetching Altinn instances from APIM");
 
-        var request = new HttpRequestMessage(HttpMethod.Get, "");
+        var appId = "tra/soknad-om-advokatbevilling";
+        // var todaysDate = DateTime.Now.ToString("yyyy-MM-dd"); - skal brukes senere, per nå bruker jeg dato fra jeg sendte inn et skjema
+        var request = new HttpRequestMessage(HttpMethod.Get, $"?appId={appId}&process.isComplete=true&process.ended=gt:2026-07-11");
         request.Headers.TryAddWithoutValidation(_apimSubcriptionKeyHeader, _apimSubcriptionKey);
 
         var response = await _httpClient.SendAsync(request, ct);
@@ -34,21 +43,79 @@ public class AltinnService
         if (!response.IsSuccessStatusCode)
         {
             var errorBody = await response.Content.ReadAsStringAsync(ct);
-            _logger.LogError("APIM Call Failed. Status: {StatusCode}, Reason: {Reason}, Content: {Content}", 
-                (int)response.StatusCode, response.ReasonPhrase, errorBody);
-            
+
+            _logger.LogError($"APIM Call Failed. Status: {(int)response.StatusCode}, Reason: {response.ReasonPhrase}, Content: {errorBody}");
+
             throw new HttpRequestException($"APIM returned {(int)response.StatusCode} ({response.ReasonPhrase}). Details: {errorBody}");
         }
 
         var json = await response.Content.ReadAsStringAsync(ct);
 
         var result = JsonConvert.DeserializeObject<AltinnInstances>(json);
-        
+
         if (result?.instances != null) {
-            _logger.LogInformation("Fetched {Count} instances from Altinn", result.instances.Count);
+            _logger.LogInformation($"Fetched {result.instances.Count} instances from Altinn");
             return result.instances;
         }
 
         return null;
+    }
+
+    public async Task<InstanceDataResult?> GetInstanceData(string instanceId, string dataId, CancellationToken ct = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, $"{instanceId}/data/{dataId}");
+        request.Headers.TryAddWithoutValidation(_apimSubcriptionKeyHeader, _apimSubcriptionKey);
+
+        var response = await _httpClient.SendAsync(request, ct);
+        if (!response.IsSuccessStatusCode) return null;
+
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+        var result = new InstanceDataResult { ContentType = contentType };
+
+        if (contentType == "application/pdf")
+        {
+            result.FileBytes = await response.Content.ReadAsByteArrayAsync(ct); // handle PDF by reading as byte array
+            result.Filename = response.Content.Headers.ContentDisposition?.FileName ?? $"{dataId}.pdf";
+        }
+        else if (contentType.Contains("xml"))
+        {
+            var xml = await response.Content.ReadAsStringAsync(ct);
+            var serializer = new XmlSerializer(typeof(AT_forstegangssoker));
+            using var reader = new StringReader(xml);
+            result.Model = (AT_forstegangssoker?)serializer.Deserialize(reader);
+        }
+        else if (contentType.Contains("json")) // json is not returned as of 07.2026, but is added just in case of future addition
+        {
+            var json = await response.Content.ReadAsStringAsync(ct);
+            result.Model = JsonConvert.DeserializeObject<AT_forstegangssoker>(json);
+        }
+
+        return result;
+    }
+
+    public async Task<List<(AltinnSoknadsskjema Instance, AT_forstegangssoker? FormData)>> GetInstancesWithData(CancellationToken ct = default)
+    {
+        var instances = await GetInstances(ct);
+        if (instances == null) return [];
+
+        var results = new List<(AltinnSoknadsskjema, AT_forstegangssoker?)>();
+
+        foreach (var instance in instances)
+        {
+            if (instance.data == null) continue;
+
+            foreach (var dataElement in instance.data)
+            {
+                var result = await GetInstanceData(instance.id, dataElement.id, ct);
+
+                if (result?.Model != null)
+                {
+                    results.Add((instance, result.Model));
+                    // notat: pdf'er blir ignorert her, men de ligger fetcha i 'result.FileBytes' til videre bruk for senere
+                }
+            }
+        }
+
+        return results;
     }
 }
