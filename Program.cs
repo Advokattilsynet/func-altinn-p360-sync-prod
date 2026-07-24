@@ -49,9 +49,19 @@ catch (Exception ex)
     throw;
 }
 
-// HttpClient
+// HttpClient Altinn
 builder.Services.AddHttpClient<AltinnService>(client => {
-    client.BaseAddress = new Uri(apimSettings.Url!);
+    client.BaseAddress = new Uri(apimSettings.AltinnUrl!);
+})
+.ConfigurePrimaryHttpMessageHandler(() =>
+{
+    var handler = new HttpClientHandler();
+    handler.ClientCertificates.Add(cert);
+    return handler;
+});
+// HttpClient Skarv
+builder.Services.AddHttpClient<SkarvService>(client => {
+    client.BaseAddress = new Uri(apimSettings.SkarvUrl!);
 })
 .ConfigurePrimaryHttpMessageHandler(() =>
 {
