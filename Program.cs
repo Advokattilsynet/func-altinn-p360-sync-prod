@@ -69,6 +69,16 @@ builder.Services.AddHttpClient<SkarvService>(client => {
     handler.ClientCertificates.Add(cert);
     return handler;
 });
+// HttpClient P360
+builder.Services.AddHttpClient<P360Service>(client => {
+    client.BaseAddress = new Uri(apimSettings.P360Url!);
+})
+.ConfigurePrimaryHttpMessageHandler(() =>
+{
+    var handler = new HttpClientHandler();
+    handler.ClientCertificates.Add(cert);
+    return handler;
+});
 
 builder.Services.Configure<ApimSettings>(builder.Configuration.GetSection("ApimSettings")); // Bind settings to DI container for rest of the app
 

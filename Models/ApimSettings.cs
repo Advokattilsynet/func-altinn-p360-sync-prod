@@ -4,7 +4,9 @@ namespace func_altinn_p360_sync_prod.Models
   {
     public string AltinnUrl { get; set; } = string.Empty;
     public string SkarvUrl { get; set; } = string.Empty;
+    public string P360Url { get; set; } = string.Empty;
     public string SubscriptionKey { get; set; } = string.Empty;
+    public string P360AuthKey { get; set; } = string.Empty;
     public string KeyVaultUri { get; set; } = string.Empty;
     public string CertName { get; set; } = string.Empty;
   }
