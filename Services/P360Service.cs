@@ -26,15 +26,15 @@ public class P360Service
     public async Task<P360CaseResponse?> PostCase(CancellationToken ct = default)
     {
         _logger.LogInformation("Sending new case to P360 via APIM");
-   
+
         P360Case p360case = new P360Case
-		{
-			parameter = new Parameter
-			{
-				Title = "Søknad om advokatbevilling - AZ-test",
-				Status = "B" // B = "Under behandling"
-			}
-		};
+        {
+            parameter = new CaseParameter
+            {
+                Title = "Søknad om advokatbevilling - Full test via Bruno/AZ",
+                Status = "B" // B = "Under behandling"
+            }
+        };
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"CaseService/CreateCase?authkey={_p360AuthKey}");
         request.Headers.TryAddWithoutValidation(_apimSubcriptionKeyHeader, _apimSubcriptionKey);
@@ -58,6 +58,51 @@ public class P360Service
 
         if (result != null) {
             _logger.LogInformation("Sent new case to P360");
+            return result;
+        }
+
+        return null;
+    }
+
+    public async Task<P360DocumentResponse?> PostDocument(string? caseNum, CancellationToken ct = default)
+    {
+        _logger.LogInformation("Sending new document to P360 via APIM");
+
+        P360Document p360doc = new P360Document
+        {
+            parameter = new DocumentParameter
+            {
+                Title = "Full test via Bruno/AZ - DOKUMENT",
+                Category = "110", // 110 = "Dokument inn"
+                Status = "J", // J = "Journalført"
+                CaseNumber = caseNum,
+                Paragraph = "Offl § 13" // "Unntatt fra offentligheten" (13.1 ift. paragraf under OFL § 13.1)
+                // Files = null;
+            }
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"DocumentService/CreateDocument?authkey={_p360AuthKey}");
+        request.Headers.TryAddWithoutValidation(_apimSubcriptionKeyHeader, _apimSubcriptionKey);
+
+        string jsonString = JsonConvert.SerializeObject(p360doc);
+        request.Content = new StringContent(jsonString, Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.SendAsync(request, ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(ct);
+
+            _logger.LogError($"APIM P360Doc Call Failed. Status: {(int)response.StatusCode}, Reason: {response.ReasonPhrase}, Content: {errorBody}");
+
+            throw new HttpRequestException($"APIM P360Doc Call returned {(int)response.StatusCode} ({response.ReasonPhrase}). Details: {errorBody}");
+        }
+
+        var json = await response.Content.ReadAsStringAsync(ct);
+        var result = JsonConvert.DeserializeObject<P360DocumentResponse>(json);
+
+        if (result != null) {
+            _logger.LogInformation("Sent new document to P360");
             return result;
         }
 

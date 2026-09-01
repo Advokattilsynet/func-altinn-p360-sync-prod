@@ -2,10 +2,10 @@ namespace func_altinn_p360_sync_prod.Models
 {
   public class P360Case
   {
-      public Parameter? parameter { get; set; }
+      public CaseParameter? parameter { get; set; }
   }
 
-  public class Parameter
+  public class CaseParameter
   {
     public string? Title { get; set; }
 	public string? Status { get; set; }

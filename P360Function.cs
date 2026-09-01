@@ -17,13 +17,14 @@ public class P360Function
         _p360Service = p360Service;
     }
 
-    [Function("PostCase")]
+    [Function("PostFullCase")]
     public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req)
     {
         _logger.LogInformation("Creating P360 case via APIM to Public 360");
 
-        var results = await _p360Service.PostCase();
+        var caseResult = await _p360Service.PostCase();
+        var documentResult = await _p360Service.PostDocument(caseResult?.CaseNumber);
 
-        return new OkObjectResult(results);
+        return new OkObjectResult(documentResult);
     }
 }
