@@ -22,8 +22,9 @@ public class P360Function
     {
         _logger.LogInformation("Creating P360 case via APIM to Public 360");
 
-        var caseResult = await _p360Service.PostCase();
-        var documentResult = await _p360Service.PostDocument(caseResult?.CaseNumber);
+        P360CaseResponse? caseResult = await _p360Service.PostCase();
+        P360DocumentResponse? documentResult = await _p360Service.PostDocument(caseResult?.CaseNumber);
+        P360FileResponse? fileResult = await _p360Service.PostFile("testest", documentResult?.DocumentNumber, "aGVpMTIzCg==");
 
         return new OkObjectResult(documentResult);
     }

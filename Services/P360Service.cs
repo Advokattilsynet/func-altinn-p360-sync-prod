@@ -108,4 +108,47 @@ public class P360Service
 
         return null;
     }
+
+    public async Task<P360FileResponse?> PostFile(string? filetitle, string? docNum, string? base64data, CancellationToken ct = default)
+    {
+        _logger.LogInformation("Sending new file to P360 via APIM");
+
+        P360File p360file = new P360File
+        {
+            parameter = new FileParameter
+            {
+                Title = filetitle,
+                Format = "PDF", // Altinn returns only PDFs
+                Base64Data = base64data,
+                DocumentNumber = docNum
+            }
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"FileService/CreateFile?authkey={_p360AuthKey}");
+        request.Headers.TryAddWithoutValidation(_apimSubcriptionKeyHeader, _apimSubcriptionKey);
+
+        string jsonString = JsonConvert.SerializeObject(p360file);
+        request.Content = new StringContent(jsonString, Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.SendAsync(request, ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(ct);
+
+            _logger.LogError($"APIM P360File Call Failed. Status: {(int)response.StatusCode}, Reason: {response.ReasonPhrase}, Content: {errorBody}");
+
+            throw new HttpRequestException($"APIM P360File Call returned {(int)response.StatusCode} ({response.ReasonPhrase}). Details: {errorBody}");
+        }
+
+        var json = await response.Content.ReadAsStringAsync(ct);
+        var result = JsonConvert.DeserializeObject<P360FileResponse>(json);
+
+        if (result != null) {
+            _logger.LogInformation("Sent new file to P360");
+            return result;
+        }
+
+        return null;
+    }
 }
