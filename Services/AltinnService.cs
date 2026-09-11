@@ -93,26 +93,47 @@ public class AltinnService
         return result;
     }
 
-    public async Task<List<(AltinnSoknadsskjema Instance, AT_forstegangssoker? FormData)>> GetInstancesWithData(CancellationToken ct = default)
+    public async Task<
+        List<(
+            AltinnSoknadsskjema Instance,
+            AT_forstegangssoker? FormData,
+            List<byte[]> Files
+        )>
+    > GetInstancesWithData(CancellationToken ct = default)
     {
         var instances = await GetInstances(ct);
         if (instances == null) return [];
 
-        var results = new List<(AltinnSoknadsskjema, AT_forstegangssoker?)>();
+        var results = new List<(AltinnSoknadsskjema Instance, AT_forstegangssoker? Model, List<byte[]> Files)>();
 
         foreach (var instance in instances)
         {
             if (instance.data == null) continue;
 
+            AT_forstegangssoker? model = null;
+            var files = new List<byte[]>();
+
             foreach (var dataElement in instance.data)
             {
                 var result = await GetInstanceData(instance.id, dataElement.id, ct);
 
-                if (result?.Model != null)
+                if (result == null)
+                    continue;
+
+                if (result.Model != null)
                 {
-                    results.Add((instance, result.Model));
-                    // notat: pdf'er blir ignorert her, men de ligger fetcha i 'result.FileBytes' til videre bruk for senere
+                    model = result.Model;
                 }
+
+                if (result.FileBytes != null)
+                {
+                    files.Add(result.FileBytes);
+                }
+            }
+
+            if (model != null || files.Count > 0)
+            {
+                results.Add((instance, model, files));
             }
         }
 
