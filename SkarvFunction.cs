@@ -22,7 +22,7 @@ public class SkarvFunction
     {
         _logger.LogInformation("Fetching Skarv person from APIM");
 
-        var results = await _skarvService.GetPerson();
+        var results = await _skarvService.GetPersonsByFirstname();
 
         if (results == null || !results.Any())
         {
