@@ -77,7 +77,6 @@ public class P360Service
                 Status = "J", // J = "Journalført"
                 CaseNumber = caseNum,
                 Paragraph = "Offl § 13" // "Unntatt fra offentligheten" (13.1 ift. paragraf under OFL § 13.1)
-                // Files = null;
             }
         };
 
