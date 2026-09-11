@@ -23,7 +23,7 @@ public class P360Service
         _p360AuthKey = settings.Value.P360AuthKey;
     }
 
-    public async Task<P360CaseResponse?> PostCase(CancellationToken ct = default)
+    public async Task<P360CaseResponse?> PostCase(string name, CancellationToken ct = default)
     {
         _logger.LogInformation("Sending new case to P360 via APIM");
 
@@ -31,8 +31,8 @@ public class P360Service
         {
             parameter = new CaseParameter
             {
-                Title = "Søknad om advokatbevilling - Full test via Bruno/AZ",
-                Status = "B" // B = "Under behandling"
+                Title = "Søknad om advokatbevilling - " + name,
+                Status = "B" // B = "Under behandling",
             }
         };
 
