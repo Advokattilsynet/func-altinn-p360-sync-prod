@@ -41,7 +41,9 @@ public class SkarvService
 
         var json = await response.Content.ReadAsStringAsync(ct);
 
-        var result = JsonConvert.DeserializeObject<SkarvPerson>(json);
+        var results = JsonConvert.DeserializeObject<List<SkarvPerson>>(json);
+
+        var result = results?.FirstOrDefault();
 
         if (result != null) {
             _logger.LogInformation($"Fetched person from Skarv");
