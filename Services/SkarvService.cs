@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace func_altinn_p360_sync_prod.Services;
 
@@ -24,7 +25,7 @@ public class SkarvService
     {
         _logger.LogInformation("Fetching Skarv data from APIM");
 
-        var request = new HttpRequestMessage(HttpMethod.Get, $"person?ssn=");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"person?ssn={ssn}");
         request.Headers.TryAddWithoutValidation(_apimSubcriptionKeyHeader, _apimSubcriptionKey);
 
         var response = await _httpClient.SendAsync(request, ct);
