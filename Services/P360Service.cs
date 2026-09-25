@@ -32,7 +32,8 @@ public class P360Service
             parameter = new CaseParameter
             {
                 Title = "Søknad om advokatbevilling - " + name,
-                Status = "B" // B = "Under behandling",
+                Status = "B", // B = "Under behandling"
+                ResponsiblePersonRecno = "243915" // Alltid samme saksbehandler
             }
         };
 
@@ -76,7 +77,8 @@ public class P360Service
                 Category = "110", // 110 = "Dokument inn"
                 Status = "J", // J = "Journalført"
                 CaseNumber = caseNum,
-                Paragraph = "Offl § 13" // "Unntatt fra offentligheten" (13.1 ift. paragraf under OFL § 13.1)
+                Paragraph = "Offl § 13", // "Unntatt fra offentligheten" (13.1 ift. paragraf under OFL § 13.1)
+                ResponsiblePersonRecno = "243915" // Alltid samme saksbehandler
             }
         };
 

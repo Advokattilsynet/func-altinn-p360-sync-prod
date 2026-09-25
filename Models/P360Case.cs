@@ -9,5 +9,6 @@ namespace func_altinn_p360_sync_prod.Models
   {
     public string? Title { get; set; }
 	public string? Status { get; set; }
+	public string? ResponsiblePersonRecno { get; set; }
   }
 }

@@ -13,5 +13,6 @@ namespace func_altinn_p360_sync_prod.Models
 	public string? CaseNumber { get; set; }
 	public string? Paragraph { get; set; }
 	public string? Files { get; set; }
+	public string? ResponsiblePersonRecno { get; set; }
   }
 }
