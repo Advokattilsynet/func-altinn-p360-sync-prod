@@ -70,11 +70,11 @@ public class SyncFunction
             // P360
             _logger.LogInformation("Creating new case to P360 via APIM");
 
-            var name = skarvResult.Fornavn + skarvResult.Etternavn;
+            var name = skarvResult.Fornavn + " " + skarvResult.Etternavn;
             P360CaseResponse? caseResult = await _p360Service.PostCase(name);
 
             _logger.LogInformation("Creating new document to P360 via APIM");
-            P360DocumentResponse? documentResult = await _p360Service.PostDocument(caseResult?.CaseNumber);
+            P360DocumentResponse? documentResult = await _p360Service.PostDocument(name, caseResult?.CaseNumber);
 
             P360FileResponse? fileResult = null;
             foreach (var file in item.Files) {

@@ -65,7 +65,7 @@ public class P360Service
         return null;
     }
 
-    public async Task<P360DocumentResponse?> PostDocument(string? caseNum, CancellationToken ct = default)
+    public async Task<P360DocumentResponse?> PostDocument(string? name, string? caseNum, CancellationToken ct = default)
     {
         _logger.LogInformation("Sending new document to P360 via APIM");
 
@@ -73,7 +73,7 @@ public class P360Service
         {
             parameter = new DocumentParameter
             {
-                Title = caseNum + " - DOKUMENT",
+                Title =  "Søknad om advokatbevilling - " + name,
                 Category = "110", // 110 = "Dokument inn"
                 Status = "J", // J = "Journalført"
                 CaseNumber = caseNum,
