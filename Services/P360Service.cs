@@ -72,7 +72,7 @@ public class P360Service
         {
             parameter = new DocumentParameter
             {
-                Title = "Full test via Bruno/AZ - DOKUMENT",
+                Title = caseNum + " - DOKUMENT",
                 Category = "110", // 110 = "Dokument inn"
                 Status = "J", // J = "Journalført"
                 CaseNumber = caseNum,

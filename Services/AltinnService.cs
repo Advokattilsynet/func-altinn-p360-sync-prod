@@ -34,8 +34,8 @@ public class AltinnService
         _logger.LogInformation("Fetching Altinn instances from APIM");
 
         var appId = "tra/soknad-om-advokatbevilling";
-        // var todaysDate = DateTime.Now.ToString("yyyy-MM-dd"); - skal brukes senere, per nå bruker jeg dato fra jeg sendte inn et skjema
-        var request = new HttpRequestMessage(HttpMethod.Get, $"?appId={appId}&process.isComplete=true&process.ended=gt:2026-07-11");
+        var todaysDate = DateTime.Now.ToString("yyyy-MM-dd");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"?appId={appId}&process.isComplete=true&process.ended=gt:{todaysDate}");
         request.Headers.TryAddWithoutValidation(_apimSubcriptionKeyHeader, _apimSubcriptionKey);
 
         var response = await _httpClient.SendAsync(request, ct);
@@ -97,21 +97,21 @@ public class AltinnService
         List<(
             AltinnSoknadsskjema Instance,
             AT_forstegangssoker? FormData,
-            List<byte[]> Files
+            List<(string Filename, byte[] Bytes)> Files
         )>
     > GetInstancesWithData(CancellationToken ct = default)
     {
         var instances = await GetInstances(ct);
         if (instances == null) return [];
 
-        var results = new List<(AltinnSoknadsskjema Instance, AT_forstegangssoker? Model, List<byte[]> Files)>();
+        var results = new List<(AltinnSoknadsskjema Instance, AT_forstegangssoker? Model, List<(string Filename, byte[] Bytes)> Files)>();
 
         foreach (var instance in instances)
         {
             if (instance.data == null) continue;
 
             AT_forstegangssoker? model = null;
-            var files = new List<byte[]>();
+            var files = new List<(string Filename, byte[] Bytes)>();
 
             foreach (var dataElement in instance.data)
             {
@@ -127,7 +127,7 @@ public class AltinnService
 
                 if (result.FileBytes != null)
                 {
-                    files.Add(result.FileBytes);
+                    files.Add((result.Filename ?? "unknown.pdf", result.FileBytes));
                 }
             }
 

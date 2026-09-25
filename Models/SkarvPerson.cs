@@ -12,8 +12,8 @@ public class SkarvPerson
     public string? Etternavn { get; set; }
     public string? BGOpphorsdato { get; set; }
     public string? BegrensetForbud { get; set; }
-    //public string? Skvid { get; set; } - To be added
-    //public string? Id360 { get; set; } - To be added
+    public string? Skvid { get; set; }
+    public string? Id360 { get; set; }
 }
 
 public class HjemmelListe
