@@ -80,6 +80,8 @@ builder.Services.AddHttpClient<P360Service>(client => {
     return handler;
 });
 
+builder.Services.AddSingleton<PdfMergeService>();
+
 builder.Services.Configure<ApimSettings>(builder.Configuration.GetSection("ApimSettings")); // Bind settings to DI container for rest of the app
 
 // Add Keyvault source

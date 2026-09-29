@@ -16,13 +16,20 @@ public class SyncFunction
     private readonly AltinnService _altinnService;
     private readonly SkarvService _skarvService;
     private readonly P360Service _p360Service;
+    private readonly PdfMergeService _pdfMergeService;
 
-    public SyncFunction(ILogger<SyncFunction> logger, AltinnService altinnService, SkarvService skarvService, P360Service p360Service)
+    public SyncFunction(
+        ILogger<SyncFunction> logger,
+        AltinnService altinnService,
+        SkarvService skarvService,
+        P360Service p360Service,
+        PdfMergeService pdfMergeService)
     {
         _logger = logger;
         _altinnService = altinnService;
         _skarvService = skarvService;
         _p360Service = p360Service;
+        _pdfMergeService = pdfMergeService;
     }
 
     [Function("SyncAltinnToP360")]
@@ -76,14 +83,19 @@ public class SyncFunction
             _logger.LogInformation("Creating new document to P360 via APIM");
             P360DocumentResponse? documentResult = await _p360Service.PostDocument(name, caseResult?.CaseNumber);
 
-            P360FileResponse? fileResult = null;
-            foreach (var file in item.Files) {
-                _logger.LogInformation("Creating new file to P360 via APIM");
-                var fileName = file.Filename;
-                var content = Convert.ToBase64String(file.Bytes);
+            if (item?.Files != null && item.Files.Any())
+            {
+                _logger.LogInformation("Merging and creating new file to P360 via APIM");
+                var mergedBytes = _pdfMergeService.MergePdfDocuments(item.Files);
 
-                fileResult = await _p360Service.PostFile(fileName, documentResult?.DocumentNumber, content);
-            };
+                if (mergedBytes != null && mergedBytes.Length > 0)
+                {
+                    var fileName = item.Files.Count == 1 ? item.Files[0].Filename : $"Søknad - {name}.pdf";
+                    var content = Convert.ToBase64String(mergedBytes);
+
+                    await _p360Service.PostFile(fileName, documentResult?.DocumentNumber, content);
+                }
+            }
         };
 
         return new OkObjectResult(new {
