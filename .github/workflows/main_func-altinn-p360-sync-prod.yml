@@ -7,6 +7,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'README.md'  # Ignore changes to README.md
   workflow_dispatch:
 
 env:
@@ -50,4 +52,4 @@ jobs:
           app-name: 'func-altinn-p360-sync-prod'
           slot-name: 'Production'
           package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
-          
+
