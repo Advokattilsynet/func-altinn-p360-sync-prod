@@ -68,17 +68,28 @@ public class P360Service
     public async Task<P360DocumentResponse?> PostDocument(string? name, string? caseNum, CancellationToken ct = default)
     {
         _logger.LogInformation("Sending new document to P360 via APIM");
+        var todaysDate = DateTime.Now.ToString("yyyy-MM-dd");
 
         P360Document p360doc = new P360Document
         {
             parameter = new DocumentParameter
             {
-                Title =  "Søknad om advokatbevilling - " + name,
+                Title = "Søknad om advokatbevilling - " + name,
+                DocumentDate = todaysDate,
                 Category = "110", // 110 = "Dokument inn"
                 Status = "J", // J = "Journalført"
                 CaseNumber = caseNum,
+                AccessCode = "18", // 18 = "KP" (Keep from public access)
                 Paragraph = "Offl § 13", // "Unntatt fra offentligheten" (13.1 ift. paragraf under OFL § 13.1)
-                ResponsiblePersonRecno = "243915" // Alltid samme saksbehandler
+                ResponsiblePersonRecno = "243915", // Alltid samme saksbehandler
+                Contacts = new List<DocumentContact?>
+                {
+                    new DocumentContact
+                    {
+                        ExternalId = "recno:258217", // testuser
+                        Role = "recno:5" // "Sender"
+                    }
+                }
             }
         };
 
