@@ -45,16 +45,33 @@ public class PdfMergeService
 
         using var outputDocument = new PdfDocument();
 
-        foreach (var file in reorderedList)
+        for (int fileIndex = 0; fileIndex < reorderedList.Count; fileIndex++)
         {
+            var file = reorderedList[fileIndex];
+
             try
             {
                 using var stream = new MemoryStream(file.Bytes);
                 using var inputDocument = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
 
+                PdfPage? firstPage = null;
+
                 for (int i = 0; i < inputDocument.PageCount; i++)
                 {
-                    outputDocument.AddPage(inputDocument.Pages[i]);
+                    var page = outputDocument.AddPage(inputDocument.Pages[i]);
+
+                    if (i == 0)
+                    {
+                        firstPage = page;
+                    }
+                }
+
+                if (firstPage != null)
+                {
+                    var bookmarkTitle = GetBookmarkTitle(file.Filename, fileIndex + 1);
+                    outputDocument.Outlines.Add(bookmarkTitle, firstPage);
+
+                    _logger.LogInformation($"Added bookmark '{bookmarkTitle}' pointing to page {outputDocument.PageCount - inputDocument.PageCount + 1}");
                 }
 
                 _logger.LogInformation($"Appended {inputDocument.PageCount} pages from {file.Filename}");
@@ -69,5 +86,17 @@ public class PdfMergeService
         using var outputStream = new MemoryStream();
         outputDocument.Save(outputStream, false);
         return outputStream.ToArray();
+    }
+
+    private static string GetBookmarkTitle(string filename, int index)
+    {
+        var name = Path.GetFileNameWithoutExtension(filename);
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            name = "Dokument";
+        }
+
+        return $"{index}. {name}";
     }
 }
