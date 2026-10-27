@@ -80,7 +80,7 @@ public class P360Service
                 Status = "J", // J = "Journalført"
                 CaseNumber = caseNum,
                 AccessCode = "18", // 18 = "KP" (Keep from public access)
-                Paragraph = "Offl § 13", // "Unntatt fra offentligheten" (13.1 ift. paragraf under OFL § 13.1)
+                Paragraph = "Offl § 13 (1), jf. advokatloven § 63(2)", // "Unntatt fra offentligheten" (13.1 ift. paragraf under OFL § 13.1)
                 ResponsiblePersonRecno = "243915", // Alltid samme saksbehandler
                 Contacts = new List<DocumentContact?>
                 {
