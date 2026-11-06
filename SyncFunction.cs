@@ -57,6 +57,8 @@ public class SyncFunction
             Files = r.Files
         }).ToList();
 
+        int processedRecords = 0;
+
         foreach (var item in altinnItems) 
         {
             // SKARV
@@ -65,23 +67,33 @@ public class SyncFunction
             var ssn = item?.FormData?.personalia?.ssn?.ToString() ?? string.Empty;
             SkarvPerson? skarvResult = await _skarvService.GetPersonWithSSN(ssn);
 
+            string name;
+            UnregisteredDocumentContact? unregisteredDocContact = null;
+
             if (skarvResult == null)
             {
-                return new OkObjectResult(new {
-                    Message = "Success",
-                    RecordsProcessed = 0,
-                    Details = "No person found with the provided SSN."
-                });
+                _logger.LogInformation("No person found in Skarv with SSN. Proceeding with unregistered contact.");
+
+                name = item?.FormData?.personalia?.name ?? "Uregistrert person";
+
+                unregisteredDocContact = new UnregisteredDocumentContact
+                {
+                    ContactName = name,
+                    Role = "recno:5", // "Sender" / "Avsender"
+                    ReferenceNumber = !string.IsNullOrEmpty(ssn) ? ssn : null
+                };
+            }
+            else
+            {
+                name = skarvResult.Fornavn + " " + skarvResult.Etternavn;
             }
 
             // P360
             _logger.LogInformation("Creating new case to P360 via APIM");
-
-            var name = skarvResult.Fornavn + " " + skarvResult.Etternavn;
             P360CaseResponse? caseResult = await _p360Service.PostCase(name);
 
             _logger.LogInformation("Creating new document to P360 via APIM");
-            P360DocumentResponse? documentResult = await _p360Service.PostDocument(name, caseResult?.CaseNumber);
+            P360DocumentResponse? documentResult = await _p360Service.PostDocument(name, caseResult?.CaseNumber, unregisteredDocContact, skarvResult?.Id360);
 
             if (item?.Files != null && item.Files.Any())
             {
@@ -96,11 +108,13 @@ public class SyncFunction
                     await _p360Service.PostFile(fileName, documentResult?.DocumentNumber, content);
                 }
             }
+
+            processedRecords++;
         };
 
         return new OkObjectResult(new {
             Message = "Success",
-            RecordsProcessed = 0,
+            RecordsProcessed = processedRecords,
             Details = "Transfer from Altinn to P360 succeeded!"
         });
     }

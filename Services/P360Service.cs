@@ -65,7 +65,7 @@ public class P360Service
         return null;
     }
 
-    public async Task<P360DocumentResponse?> PostDocument(string? name, string? caseNum, CancellationToken ct = default)
+    public async Task<P360DocumentResponse?> PostDocument(string? name, string? caseNum, UnregisteredDocumentContact? unregisteredContact = null, string? id360 = null, CancellationToken ct = default)
     {
         _logger.LogInformation("Sending new document to P360 via APIM");
         var todaysDate = DateTime.Now.ToString("yyyy-MM-dd");
@@ -82,14 +82,15 @@ public class P360Service
                 AccessCode = "18", // 18 = "KP" (Keep from public access)
                 Paragraph = "Offl § 13 (1), jf. advokatloven § 63(2)", // "Unntatt fra offentligheten" (13.1 ift. paragraf under OFL § 13.1)
                 ResponsiblePersonRecno = "243915", // Alltid samme saksbehandler
-                Contacts = new List<DocumentContact?>
+                Contacts = unregisteredContact == null ? new List<DocumentContact?>
                 {
                     new DocumentContact
                     {
-                        ExternalId = "recno:258217", // testuser
+                        ExternalId = "recno:" + id360,
                         Role = "recno:5" // "Sender"
                     }
-                }
+                } : null,
+                UnregisteredContacts = unregisteredContact != null ? new List<UnregisteredDocumentContact?> { unregisteredContact } : null
             }
         };
 
