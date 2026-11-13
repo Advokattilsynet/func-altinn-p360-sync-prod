@@ -18,14 +18,19 @@ namespace func_altinn_p360_sync_prod.Services;
 public class AltinnService
 {
     private readonly ILogger<AltinnService> _logger;
-    private readonly HttpClient _httpClient;
+    public const string StorageClientName = "AltinnStorage";
+    public const string ApiClientName = "AltinnApi";
+
+    private readonly HttpClient _storageHttpClient;
+    private readonly HttpClient _apiHttpClient;
     private const string _apimSubcriptionKeyHeader = "Ocp-Apim-Subscription-Key";
     private string _apimSubcriptionKey;
 
-    public AltinnService(HttpClient httpClient, ILogger<AltinnService> logger, IOptions<ApimSettings> settings)
+    public AltinnService(IHttpClientFactory httpClientFactory, ILogger<AltinnService> logger, IOptions<ApimSettings> settings)
     {
         _logger = logger;
-        _httpClient = httpClient;
+        _storageHttpClient = httpClientFactory.CreateClient(StorageClientName);
+        _apiHttpClient = httpClientFactory.CreateClient(ApiClientName);
         _apimSubcriptionKey = settings.Value.SubscriptionKey;
     }
 
@@ -38,7 +43,7 @@ public class AltinnService
         var request = new HttpRequestMessage(HttpMethod.Get, $"?appId={appId}&process.isComplete=true&excludeConfirmedBy={org}"); // excludeConfirmedBy skips instances we've already marked as complete
         request.Headers.TryAddWithoutValidation(_apimSubcriptionKeyHeader, _apimSubcriptionKey);
 
-        var response = await _httpClient.SendAsync(request, ct);
+        var response = await _storageHttpClient.SendAsync(request, ct);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -65,10 +70,10 @@ public class AltinnService
     {
         _logger.LogInformation($"Marking Altinn instance {instanceId} as complete");
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"{instanceId}/complete");
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{instanceId}/complete"); // relative to AltinnApiUrl
         request.Headers.TryAddWithoutValidation(_apimSubcriptionKeyHeader, _apimSubcriptionKey);
 
-        var response = await _httpClient.SendAsync(request, ct);
+        var response = await _apiHttpClient.SendAsync(request, ct);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -87,7 +92,7 @@ public class AltinnService
         var request = new HttpRequestMessage(HttpMethod.Get, $"{instanceId}/data/{dataId}");
         request.Headers.TryAddWithoutValidation(_apimSubcriptionKeyHeader, _apimSubcriptionKey);
 
-        var response = await _httpClient.SendAsync(request, ct);
+        var response = await _storageHttpClient.SendAsync(request, ct);
         if (!response.IsSuccessStatusCode) return null;
 
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";

@@ -49,9 +49,9 @@ catch (Exception ex)
     throw;
 }
 
-// HttpClient Altinn
-builder.Services.AddHttpClient<AltinnService>(client => {
-    client.BaseAddress = new Uri(apimSettings.AltinnUrl!);
+// HttpClient Altinn Storage (instances/data)
+builder.Services.AddHttpClient(AltinnService.StorageClientName, client => {
+    client.BaseAddress = new Uri(apimSettings.AltinnStorageUrl!);
 })
 .ConfigurePrimaryHttpMessageHandler(() =>
 {
@@ -59,6 +59,17 @@ builder.Services.AddHttpClient<AltinnService>(client => {
     handler.ClientCertificates.Add(cert);
     return handler;
 });
+// HttpClient Altinn API (complete instance)
+builder.Services.AddHttpClient(AltinnService.ApiClientName, client => {
+    client.BaseAddress = new Uri(apimSettings.AltinnApiUrl!);
+})
+.ConfigurePrimaryHttpMessageHandler(() =>
+{
+    var handler = new HttpClientHandler();
+    handler.ClientCertificates.Add(cert);
+    return handler;
+});
+builder.Services.AddTransient<AltinnService>();
 // HttpClient Skarv
 builder.Services.AddHttpClient<SkarvService>(client => {
     client.BaseAddress = new Uri(apimSettings.SkarvUrl!);
