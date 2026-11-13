@@ -32,8 +32,30 @@ public class SyncFunction
         _pdfMergeService = pdfMergeService;
     }
 
+    // Runs at 00:00, 08:00 and 14:00 Norwegian time every day (winter-time +1)
+    [Function("SyncAltinnToP360Timer")]
+    public async Task RunTimer([TimerTrigger("0 0 23,7,13 * * *")] TimerInfo timer)
+    {
+        _logger.LogInformation($"Scheduled sync started at {DateTime.UtcNow} (UTC)");
+
+        var result = await Sync();
+
+        if (result is ObjectResult objectResult)
+        {
+            _logger.LogInformation($"Scheduled sync finished with status {objectResult.StatusCode}: {JsonSerializer.Serialize(objectResult.Value)}");
+        }
+
+        if (timer.ScheduleStatus is not null)
+        {
+            _logger.LogInformation($"Next scheduled sync: {timer.ScheduleStatus.Next}");
+        }
+    }
+
     [Function("SyncAltinnToP360")]
-    public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
+    public Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
+        => Sync();
+
+    private async Task<IActionResult> Sync()
     {
         // ALTINN
         _logger.LogInformation("Fetching Altinn instances from APIM");
