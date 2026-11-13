@@ -33,9 +33,9 @@ public class AltinnService
     {
         _logger.LogInformation("Fetching Altinn instances from APIM");
 
-        var appId = "tra/soknad-om-advokatbevilling";
-        var todaysDate = DateTime.Now.ToString("yyyy-MM-dd");
-        var request = new HttpRequestMessage(HttpMethod.Get, $"?appId={appId}&process.isComplete=true&process.ended=gt:{todaysDate}");
+        var org = "tra";
+        var appId = $"{org}/soknad-om-advokatbevilling";
+        var request = new HttpRequestMessage(HttpMethod.Get, $"?appId={appId}&process.isComplete=true&excludeConfirmedBy={org}"); // excludeConfirmedBy skips instances we've already marked as complete
         request.Headers.TryAddWithoutValidation(_apimSubcriptionKeyHeader, _apimSubcriptionKey);
 
         var response = await _httpClient.SendAsync(request, ct);
@@ -59,6 +59,27 @@ public class AltinnService
         }
 
         return null;
+    }
+
+    public async Task CompleteInstance(string instanceId, CancellationToken ct = default)
+    {
+        _logger.LogInformation($"Marking Altinn instance {instanceId} as complete");
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{instanceId}/complete");
+        request.Headers.TryAddWithoutValidation(_apimSubcriptionKeyHeader, _apimSubcriptionKey);
+
+        var response = await _httpClient.SendAsync(request, ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(ct);
+
+            _logger.LogError($"APIM Altinn complete call failed for instance {instanceId}. Status: {(int)response.StatusCode}, Reason: {response.ReasonPhrase}, Content: {errorBody}");
+
+            throw new HttpRequestException($"APIM Altinn complete call returned {(int)response.StatusCode} ({response.ReasonPhrase}) for instance {instanceId}. Details: {errorBody}");
+        }
+
+        _logger.LogInformation($"Marked Altinn instance {instanceId} as complete");
     }
 
     public async Task<InstanceDataResult?> GetInstanceData(string instanceId, string dataId, CancellationToken ct = default)

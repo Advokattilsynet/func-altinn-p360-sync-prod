@@ -109,6 +109,12 @@ public class SyncFunction
                 }
             }
 
+            // ALTINN
+            if (!string.IsNullOrEmpty(item?.InstanceId))
+            {
+                await _altinnService.CompleteInstance(item.InstanceId);
+            }
+
             processedRecords++;
         };
 
