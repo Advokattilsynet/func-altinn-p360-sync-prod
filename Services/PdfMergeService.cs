@@ -58,7 +58,17 @@ public class PdfMergeService
 
                 for (int i = 0; i < inputDocument.PageCount; i++)
                 {
-                    var page = outputDocument.AddPage(inputDocument.Pages[i]);
+                    var inputPage = inputDocument.Pages[i];
+
+                    // Annotations (links, form widgets) can reference objects outside the page being imported
+                    // (e.g. destinations on other pages), which makes PDFsharp throw "The given key '0 0' was not present
+                    // in the dictionary" during import. They aren't needed in the merged archive copy.
+                    if (inputPage.Elements.ContainsKey("/Annots"))
+                    {
+                        inputPage.Elements.Remove("/Annots");
+                    }
+
+                    var page = outputDocument.AddPage(inputPage);
 
                     if (i == 0)
                     {

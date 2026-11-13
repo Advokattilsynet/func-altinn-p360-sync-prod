@@ -58,8 +58,44 @@ public class SyncFunction
         }).ToList();
 
         int processedRecords = 0;
+        var failures = new List<object>();
 
-        foreach (var item in altinnItems) 
+        foreach (var item in altinnItems)
+        {
+            try
+            {
+                await ProcessItem(item);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Failed to process Altinn instance {item.InstanceId} (party {item.PartyId}). Skipping and continuing with the rest.");
+                failures.Add(new { item.InstanceId, item.PartyId, Error = ex.Message });
+                continue;
+            }
+
+            processedRecords++;
+        }
+
+        if (failures.Count > 0)
+        {
+            return new ObjectResult(new {
+                Message = "Completed with failures",
+                RecordsProcessed = processedRecords,
+                RecordsFailed = failures.Count,
+                Failures = failures,
+                Details = "Some instances failed and were not marked complete. They will be retried on the next run."
+            }) { StatusCode = StatusCodes.Status207MultiStatus };
+        }
+
+        return new OkObjectResult(new {
+            Message = "Success",
+            RecordsProcessed = processedRecords,
+            Details = "Transfer from Altinn to P360 succeeded!"
+        });
+    }
+
+    private async Task ProcessItem(AltinnResult item)
+    {
         {
             // SKARV
             _logger.LogInformation("Fetching each Altinn person via Skarv from APIM");
@@ -109,13 +145,11 @@ public class SyncFunction
                 }
             }
 
-            processedRecords++;
-        };
-
-        return new OkObjectResult(new {
-            Message = "Success",
-            RecordsProcessed = processedRecords,
-            Details = "Transfer from Altinn to P360 succeeded!"
-        });
+            // ALTINN
+            if (!string.IsNullOrEmpty(item?.InstanceId))
+            {
+                await _altinnService.CompleteInstance(item.InstanceId);
+            }
+        }
     }
 }
